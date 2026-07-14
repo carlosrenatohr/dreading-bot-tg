@@ -1,44 +1,33 @@
-# dreading-bot
+# dreading-bot-tg
 
-Telegram bot that posts the **daily reading** to a channel — a client of the [dreading-api Worker](https://dreading-api-worker.honchkrow1995.workers.dev). When the reading has a generated illustration it posts the **image + caption**; otherwise it posts formatted text. Links back to the [PWA](https://dreading-pwa.pages.dev).
+Cloudflare **Worker (cron)** that posts the **daily reading** to a Telegram channel — all on Cloudflare, no GitHub Actions. Reads from the [dreading-api Worker](https://dreading-api-worker.honchkrow1995.workers.dev) and posts the generated **illustration + caption** (or formatted text), linking to the [PWA](https://dreading-pwa.pages.dev).
 
-> **Status — working (dry-run by default).** With no token it prints exactly what it would post (fetching the real reading from prod). Set the two secrets to post for real.
+> **Status — MVP.** Runs daily via a Cron Trigger. Manual endpoints for testing: `GET /run?dry=1` previews, `GET /run` posts.
 
-## What you need to test it
+## What you need
 
-1. **A bot token** — talk to [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
-2. **A channel** — create a Telegram channel, then add your bot as an **admin** (so it can post). Use `@your_channel` (or the numeric chat id).
+1. **Bot token** — [@BotFather](https://t.me/BotFather) → `/newbot` → copy `12345:AA...`.
+2. **Channel** — create a channel and add the bot as an **admin**. Use `@your_channel` or the numeric id (`-100...`).
 
-## Run
+## Deploy
 
 ```bash
-pip install -r requirements.txt
-
-# dry-run: fetches today's reading from prod and PRINTS what it would post
-python bot.py
-
-# real post:
-export TELEGRAM_BOT_TOKEN=123456:ABC...
-export TELEGRAM_CHANNEL=@your_channel
-python bot.py
+npm install
+npm run deploy                       # deploys the Worker + registers the daily cron
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put TELEGRAM_CHANNEL
 ```
 
-It reads from the prod API by default; override with `API_BASE` / `APP_URL` env vars.
+`API_BASE` / `APP_URL` are set as vars in `wrangler.jsonc` (point at prod by default).
 
 ## Test
 
 ```bash
-pip install -r requirements-dev.txt
-python -m pytest -q      # message + caption formatting (no network)
+npm test                             # vitest — caption/message formatting (no network)
+
+# after deploy, against the live Worker:
+curl "https://dreading-bot-tg.<subdomain>.workers.dev/run?dry=1"   # preview (no post)
+curl "https://dreading-bot-tg.<subdomain>.workers.dev/run"        # posts for real (needs secrets)
 ```
 
-## Schedule (daily)
-
-`.github/workflows/post.yaml` runs daily at 06:00 UTC (after the scraper) and on manual dispatch. Add the repository secrets:
-
-```bash
-gh secret set TELEGRAM_BOT_TOKEN --repo carlosrenatohr/dreading-bot --body "<from BotFather>"
-gh secret set TELEGRAM_CHANNEL   --repo carlosrenatohr/dreading-bot --body "@your_channel"
-```
-
-Then trigger it from the Actions tab (Run workflow) to test end-to-end.
+Cron: `0 6 * * *` (daily, after the scraper). Change it in `wrangler.jsonc`.

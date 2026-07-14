@@ -1,4 +1,8 @@
+node_modules
+.wrangler
+.dev.vars
+dist
+.DS_Store
 __pycache__
 .env
 venv
-.DS_Store
