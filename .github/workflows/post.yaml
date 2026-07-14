@@ -1,0 +1,27 @@
+name: Daily Telegram Post
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # after the scraper (05:30 UTC), so today's reading + art exist
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Post the daily reading
+        # Requires repository secrets:
+        #   TELEGRAM_BOT_TOKEN = from @BotFather
+        #   TELEGRAM_CHANNEL   = @your_channel (the bot must be an admin)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ secrets.TELEGRAM_CHANNEL }}
+        run: python bot.py
