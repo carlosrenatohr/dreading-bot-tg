@@ -1,16 +1,17 @@
-# CLAUDE.md — dreading-bot
+# CLAUDE.md — dreading-bot-tg
 
-Telegram bot that posts the daily reading from `dreading-api` to a channel. Sibling repos: `dreading-api`, `dreading-scrape`, `dreading-web`.
+Cloudflare Worker (cron) that posts the daily reading from `dreading-api-worker` to a Telegram channel. All-Cloudflare (no GitHub Actions). Sibling repos: `dreading-api-worker`, `dreading-scrape`, `dreading-pwa`.
 
 ## Engineering (harness flow)
 - Conventional commits, one logical unit per commit. Test-first for non-trivial logic.
-- **Gate before commit**: `python -m pytest -q` green + `python -m py_compile`.
-- Minimal comments; no dead code / stray TODOs / unused imports.
+- **Gate before commit**: `npm test` (vitest) green + `wrangler dev`/deploy boots.
+- Minimal, useful comments; no dead code / stray TODOs / unused code.
 
 ## Structure
-- `formatter.py` — pure `format_message(reading)` → Telegram HTML (unit-tested, no network).
-- `bot.py` — fetch latest reading + send (dry-run unless `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHANNEL` set).
-- `test_formatter.py` — formatter unit tests.
+- `src/index.ts` — `scheduled` (daily cron post) + `fetch` (`/run`, `/run?dry=1` for manual test).
+- `src/format.ts` — pure `caption`/`message` builders (Telegram HTML), unit-tested in `test/`.
+- `wrangler.jsonc` — cron trigger + `API_BASE`/`APP_URL` vars.
 
-## Config (env)
-- `API_BASE` (default local API), `APP_URL` (optional), `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL`.
+## Config
+- Vars: `API_BASE`, `APP_URL` (in `wrangler.jsonc`).
+- Secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL` (`wrangler secret put`).

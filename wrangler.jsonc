@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dreading-bot-tg",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-27",
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["0 6 * * *"] },
+  "vars": {
+    "API_BASE": "https://dreading-api-worker.honchkrow1995.workers.dev/api/v1",
+    "APP_URL": "https://dreading-pwa.pages.dev"
+  }
+}
