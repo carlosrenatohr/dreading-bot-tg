@@ -3,12 +3,13 @@ import { caption, message } from './format';
 interface Env {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHANNEL?: string;
-  API_BASE: string;
+  API: Fetcher; // service binding to dreading-api-worker (reliable same-account call)
   APP_URL: string;
 }
 
-async function fetchLatest(apiBase: string) {
-  const res = await fetch(`${apiBase}/readings/last`);
+async function fetchLatest(env: Env) {
+  // Service binding: the origin is ignored, only the path matters.
+  const res = await env.API.fetch('https://api.internal/api/v1/readings/last');
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json() as Promise<Record<string, any>>;
 }
@@ -36,15 +37,20 @@ async function post(env: Env, reading: Record<string, any>, dryRun: boolean) {
 export default {
   // Daily cron: post the latest reading to the channel.
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(fetchLatest(env.API_BASE).then((r) => post(env, r, false)));
+    ctx.waitUntil(fetchLatest(env).then((r) => post(env, r, false)));
   },
 
   // Manual test: /run posts for real, /run?dry=1 previews without posting.
   async fetch(req: Request, env: Env) {
     const url = new URL(req.url);
     if (url.pathname === '/run') {
-      const reading = await fetchLatest(env.API_BASE);
-      return Response.json(await post(env, reading, url.searchParams.get('dry') === '1'));
+      try {
+        const reading = await fetchLatest(env);
+        const out = await post(env, reading, url.searchParams.get('dry') === '1');
+        return new Response(JSON.stringify(out, null, 2), { headers: { 'content-type': 'application/json' } });
+      } catch (e: any) {
+        return new Response(`error: ${e?.message || e}`, { status: 500 });
+      }
     }
     return new Response('dreading-bot-tg — GET /run to post, /run?dry=1 to preview.\n', {
       headers: { 'content-type': 'text/plain; charset=utf-8' },
