@@ -7,9 +7,9 @@ interface Env {
   APP_URL: string;
 }
 
-async function fetchLatest(env: Env) {
+async function fetchToday(env: Env) {
   // Service binding: the origin is ignored, only the path matters.
-  const res = await env.API.fetch('https://api.internal/api/v1/readings/last');
+  const res = await env.API.fetch('https://api.internal/api/v1/readings/today');
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json() as Promise<Record<string, any>>;
 }
@@ -35,9 +35,9 @@ async function post(env: Env, reading: Record<string, any>, dryRun: boolean) {
 }
 
 export default {
-  // Daily cron: post the latest reading to the channel.
+  // Daily cron: post today's reading to the channel.
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(fetchLatest(env).then((r) => post(env, r, false)));
+    ctx.waitUntil(fetchToday(env).then((r) => post(env, r, false)));
   },
 
   // Manual test: /run posts for real, /run?dry=1 previews without posting.
@@ -45,7 +45,7 @@ export default {
     const url = new URL(req.url);
     if (url.pathname === '/run') {
       try {
-        const reading = await fetchLatest(env);
+        const reading = await fetchToday(env);
         const out = await post(env, reading, url.searchParams.get('dry') === '1');
         return new Response(JSON.stringify(out, null, 2), { headers: { 'content-type': 'application/json' } });
       } catch (e: any) {
