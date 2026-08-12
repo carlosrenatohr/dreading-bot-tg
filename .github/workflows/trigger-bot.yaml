@@ -1,0 +1,29 @@
+name: Trigger Bot TG
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (preview only, no post)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Telegram
+        run: |
+          DRY=${{ inputs.dry_run }}
+          URL="https://dreading-bot-tg.nativerse.workers.dev/run"
+          if [ "$DRY" = "true" ]; then
+            URL="${URL}?dry=1"
+            echo "🔍 Dry run — previewing only"
+          else
+            echo "📤 Posting to Telegram for real"
+          fi
+          curl -sf "$URL" | jq .
