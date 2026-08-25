@@ -11,7 +11,9 @@ async function fetchToday(env: Env) {
   // Service binding: the origin is ignored, only the path matters.
   const res = await env.API.fetch('https://api.internal/api/v1/readings/today');
   if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json() as Promise<Record<string, any>>;
+  const body = (await res.json()) as any;
+  // The API returns the paginated envelope { data: [...] } — unwrap the reading.
+  return Array.isArray(body?.data) ? body.data[0] : body;
 }
 
 // Post the reading's illustration + caption (sendPhoto) when present, else text.
