@@ -1,6 +1,6 @@
 # dreading-bot-tg
 
-Cloudflare **Worker (cron)** that posts the **daily reading** to a Telegram channel — all on Cloudflare, no GitHub Actions. Reads from the [dreading-api Worker](https://dreading-api-worker.honchkrow1995.workers.dev) and posts the generated **illustration + caption** (or formatted text), linking to the [PWA](https://dreading-pwa.pages.dev).
+Cloudflare **Worker (cron)** that posts the **daily reading** to a Telegram channel — all on Cloudflare, no GitHub Actions. Reads from the [dreading-api Worker](https://dreading-api-worker.nativerse.workers.dev) and posts the generated **illustration + caption** (or formatted text), linking to the [PWA](https://dreading-pwa.pages.dev).
 
 > **Status — MVP.** Runs daily via a Cron Trigger. Manual endpoints for testing: `GET /run?dry=1` previews, `GET /run` posts.
 
